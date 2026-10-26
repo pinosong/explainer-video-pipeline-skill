@@ -9,10 +9,26 @@
 这是一个给 AI 助手用的 **skill（说明书 + 工具包）**，不是独立软件。它由三部分组成：
 
 - **`SKILL.md`** —— 全流程说明书：七步的顺序、参数、规则、避坑和自检门禁。这是核心资产。
-- **`scripts/record.mjs`** —— 自研录屏器：把 anatomy 生成的会动的网页录成逐帧图片序列（CDP 抓帧）。
-- **`scripts/slice_sentences.py`** —— 自研切句器：把整段配音按停顿切回一句一段，产出全片的时间表（字幕和镜头都按它走）。
+- **`scripts/`** —— 五个自研小工具，补齐没有现成工具的环节（都以案例的量产素材回归验证过）：
+  - `tts_gemini.py` —— Gemini TTS 一次调用生成整段配音（请求格式与量产一致，带配额错误处理）
+  - `slice_sentences.py` —— 把配音按停顿切回一句一段，给出句界（两遍预测，歧义处带警告）
+  - `prep_audio.py` —— 配音后期：压句间停顿、产出时间表、整句字幕、配乐混音
+  - `record.mjs` —— 把 anatomy 生成的会动的网页录成逐帧图片序列（CDP 抓帧）
+  - `assemble.py` —— 按时间顺序拼分段视频、烧字幕、混音轨，出成片
 
-**为什么文件这么少？** 因为重的活不自己造轮子：解剖图由开源 skill [anatomy](https://github.com/wheresryan22/anatomy) 生成，配音调 Gemini API，合成用 ffmpeg。这个仓库负责的是把它们按正确的顺序和标准串起来——know-how 在说明书里，代码只补没有现成工具的两个环节。
+**为什么核心代码不多？** 因为重的活不自己造轮子：解剖图由开源 skill [anatomy](https://github.com/wheresryan22/anatomy) 生成，配音调 Gemini API，编码用 ffmpeg。这个仓库负责把它们按正确的顺序和标准串起来——know-how 在说明书里，代码只补缺口。
+
+## 先说清：谁能复刻、要什么条件
+
+这套流程的定位是"**不会写代码的人，指挥一个会写代码的 AI 助手来做**"。复刻前请先对一下条件，缺哪样都跑不通：
+
+- **一个能跑代码的 AI 助手环境**（如 Muse、Muse 等支持 skill 的工具，多数是订阅制）。本仓库不是双击就能用的软件，纯手动照着做不现实。
+- **Gemini API key**（配音用）：在 Google AI Studio 申请。注意 Gemini API 有**地区限制**，部分地区直连不通，需要自备可达的网络条件；免费额度按生成次数限流，产量大要开付费（按量计费，不贵）。
+- **anatomy skill**：开源免费，装到助手环境里（地址见下）。
+- **本机基础工具**：node、python3、ffmpeg——都由 AI 助手代为调用和检查，你不需要会用。
+- **素材**：Mixkit 免费授权，免登录下载。
+
+条件都齐，照着 `SKILL.md` 七步走就能复刻出同类片子；案例的脚本、时间表、图规格都在 `examples/` 里，可以对照着验。
 
 ## 七步流程（顺序不要乱）
 
@@ -51,8 +67,11 @@
 ```
 ├── SKILL.md                  # 全流程说明书（主体）
 ├── scripts/
+│   ├── tts_gemini.py         # Gemini TTS 一次调用
+│   ├── slice_sentences.py    # 配音切句器（两遍预测 + 警告）
+│   ├── prep_audio.py         # 配音后期（压停顿/时间表/字幕/混音）
 │   ├── record.mjs            # 网页录屏器（CDP 抓帧）
-│   └── slice_sentences.py    # 配音切句器（两遍预测 + 警告）
+│   └── assemble.py           # 分段组装成片（拼片/烧字幕/混音）
 └── examples/
-    └── solid-state-battery/  # 完整案例：定稿脚本、切句结果、时间表
+    └── solid-state-battery/  # 完整案例：定稿脚本、切句结果、时间表、三张图规格
 ```
